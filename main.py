@@ -137,6 +137,8 @@ patterns = generatetilepatterns(board, int(sys.argv[1]))
 
 
 # display patterns
+bestpattern = (None, 0)
+pointdistribution = {}
 for pattern in patterns:
     permutations = list(itertools.permutations(pattern))
     # print(permutations)
@@ -147,12 +149,30 @@ for pattern in patterns:
         points = 0
         for tile in permutation:
             points += placetile(board, tile)
+        
+        if points not in pointdistribution:
+            pointdistribution[points] = 0
+        pointdistribution[points] += 1
         if points > bestpermutation[1]:
             bestpermutation = (permutation, points)
         # print(f"Points for permutation {p}: {points}")
+    if bestpermutation[1] > bestpattern [1]:
+        bestpattern = bestpermutation
     print(f"Sample best permutation: {bestpermutation[0]}, Pointvalue: {bestpermutation[1]}")
 
     board = [False for _ in range(25)]
     for tile in bestpermutation[0]:
         placetile(board, tile)
         printboard(board, points)
+
+board = [False for _ in range(25)]
+print("==============")
+print(" BEST PATTERN ")
+print("==============")
+print(f"Points: {bestpattern[1]}")
+sortedpointdistribution = sorted(pointdistribution.items(), key=lambda x:x[1])
+for k in sortedpointdistribution:
+    print(f"Permutations worth {k[0]} points: {k[1]}")
+for tile in bestpattern[0]:
+    placetile(board, tile)
+    printboard(board, points)
