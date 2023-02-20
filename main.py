@@ -80,15 +80,15 @@ def westpoints(board, i):
         return 0
     else: return 1 + westpoints(board, westof(board, i))
 
-def generatetilepatterns(board, size):
+def gtp_recursive_backtracking(board, startpos, size):
     visited = {}
     patterns = []
-    pos = 12
+    pos = startpos
     path = []
-    takestep(board, visited, patterns, path, size, pos, pos)
+    rb_takestep(board, visited, patterns, path, size, pos, pos)
     return patterns
 
-def takestep(board, visited, patterns, path, steps, pos, startpos):
+def rb_takestep(board, visited, patterns, path, steps, pos, startpos):
     # don't step where already stepped
     path.append(pos)
     visited[pos] = True
@@ -102,18 +102,49 @@ def takestep(board, visited, patterns, path, steps, pos, startpos):
     neighbors = [northof(board, pos), southof(board, pos), eastof(board, pos), westof(board, pos)]
     for neighbor in neighbors:
         if neighbor != -1 and neighbor not in visited:
-            takestep(board, visited, patterns, path, steps, neighbor, startpos)
+            rb_takestep(board, visited, patterns, path, steps, neighbor, startpos)
     path.pop()
     del visited[pos]
     
-    
+def gtp_puddle(board, startpos, size):
+    frontier = {startpos}
+    visited = set()
+    patterns = {0: set()}
 
-def printboard(board, points):
+    for i in range(size):
+        patterns[i+1] = explore(board, patterns[i], frontier).copy()
+        print(f"iteration {i}: {patterns}")
+    return patterns, frontier
+    
+    # frontier is all unexplored nodes adjacent to the current pattern
+    # if the pattern is smaller than the desired size, explore a frontier
+
+def explore(board, pattern, frontier):
+    patterns = []
+    for pos in frontier.copy():
+        frontier.remove(pos)
+        np = pattern.copy()
+        np.add(pos)
+        if np not in patterns:
+            patterns.append(np)
+            if northof(board, pos) not in np:
+                frontier.add(northof(board, pos))
+            if southof(board, pos) not in np:
+                frontier.add(southof(board, pos))
+            if eastof(board, pos) not in np:
+                frontier.add(eastof(board, pos))
+            if westof(board, pos) not in np:
+                frontier.add(westof(board, pos))
+    return patterns
+
+def printboard(board, frontier, points):
     print("---")
     for i in range(5):
         for j in range(5):
             if board[5*i + j]:
                 print(" O ", end='')
+            elif frontier is not None and 5*i + j in frontier:
+                print(" + ", end='')
             else:
                 print(" . ", end='')
         print()
@@ -126,15 +157,30 @@ def printboard(board, points):
 # 15 16 17 18 19
 # 20 21 22 23 24
 
+# .  .  .  .  .  
+# .  .  +  .  .
+# .  +  O  +  .
+# .  .  +  .  .
+# .  .  .  .  .
+
 # use recursive backtracking algorithm to get tile locations
 # then send those locations into a permutation generator to get
 # all tile placement orders for each pattern
 
-if len(sys.argv) < 2:
-    sys.exit("Tilecount input needed. Example: ./main.py 3")
+if len(sys.argv) < 3:
+    helpmessage = '''USAGE: ./main.py <startpos> <tilecount>
+Tile Positions
+--------------
+0  1  2  3  4
+5  6  7  8  9
+10 11 12 13 14
+15 16 17 18 19
+20 21 22 23 24
+--------------'''
+    sys.exit(helpmessage)
 board = [False for _ in range(25)]
-patterns = generatetilepatterns(board, int(sys.argv[1]))
-
+# patterns = gtp_recursive_backtracking(board, int(sys.argv[1]), int(sys.argv[2]))
+patterns, frontier = gtp_puddle(board, int(sys.argv[1]), int(sys.argv[2]))
 
 # display patterns
 bestpattern = (None, 0)
@@ -163,7 +209,7 @@ for pattern in patterns:
     board = [False for _ in range(25)]
     for tile in bestpermutation[0]:
         placetile(board, tile)
-        printboard(board, points)
+        printboard(board, frontier, points)
 
 board = [False for _ in range(25)]
 print("==============")
@@ -175,4 +221,4 @@ for k in sortedpointdistribution:
     print(f"Permutations worth {k[0]} points: {k[1]}")
 for tile in bestpattern[0]:
     placetile(board, tile)
-    printboard(board, points)
+    printboard(board, frontier, points)
