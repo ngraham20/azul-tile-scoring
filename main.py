@@ -45,6 +45,7 @@ def placetile(board, i):
         points += 1
     points += rp + cp
     # printboard(board, points)
+    return points
     
 def rowpoints(board, i):
     points = eastpoints(board, i) + westpoints(board, i)
@@ -113,6 +114,7 @@ def printboard(board, points):
             else:
                 print(" . ", end='')
         print()
+    print("---")
     # print(f"Points for this placement: {points}")
 
 # 0  1  2  3  4
@@ -126,9 +128,21 @@ def printboard(board, points):
 # all tile placement orders for each pattern
 
 board = [False for _ in range(25)]
-patterns = generatetilepatterns(board, 3)
+patterns = generatetilepatterns(board, 4)
+
+
+# display patterns
 for pattern in patterns:
+    permutations = list(itertools.permutations(pattern))
+    print(permutations)
     board = [False for _ in range(25)]
-    for tile in pattern:
-        placetile(board, tile)
-    printboard(board, 0)
+    permpoints = []
+    for p, permutation in enumerate(permutations):
+        board = [False for _ in range(25)]
+        points = 0
+        for tile in permutation:
+            points += placetile(board, tile)
+        permpoints.append(points)
+        print(f"Points for permutation {p}: {points}")
+    print(f"Maximum pointvalue: {max(permpoints)}")
+    printboard(board, points)
