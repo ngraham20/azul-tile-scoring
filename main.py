@@ -1,3 +1,6 @@
+#!/usr/bin/python
+
+import sys
 import math
 import itertools
 
@@ -127,22 +130,29 @@ def printboard(board, points):
 # then send those locations into a permutation generator to get
 # all tile placement orders for each pattern
 
+if len(sys.argv) < 2:
+    sys.exit("Tilecount input needed. Example: ./main.py 3")
 board = [False for _ in range(25)]
-patterns = generatetilepatterns(board, 4)
+patterns = generatetilepatterns(board, int(sys.argv[1]))
 
 
 # display patterns
 for pattern in patterns:
     permutations = list(itertools.permutations(pattern))
-    print(permutations)
+    # print(permutations)
     board = [False for _ in range(25)]
-    permpoints = []
+    bestpermutation = (None, 0)
     for p, permutation in enumerate(permutations):
         board = [False for _ in range(25)]
         points = 0
         for tile in permutation:
             points += placetile(board, tile)
-        permpoints.append(points)
-        print(f"Points for permutation {p}: {points}")
-    print(f"Maximum pointvalue: {max(permpoints)}")
-    printboard(board, points)
+        if points > bestpermutation[1]:
+            bestpermutation = (permutation, points)
+        # print(f"Points for permutation {p}: {points}")
+    print(f"Sample best permutation: {bestpermutation[0]}, Pointvalue: {bestpermutation[1]}")
+
+    board = [False for _ in range(25)]
+    for tile in bestpermutation[0]:
+        placetile(board, tile)
+        printboard(board, points)
