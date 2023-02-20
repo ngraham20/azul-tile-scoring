@@ -29,31 +29,31 @@ def westof(board, i):
     rowsize = math.sqrt(len(board))
 
     # the modulus would only equal 5 if it wrapped
-    if i - 1 >= 0 and (i - 1) % rowsize != 5:
+    if i - 1 >= 0 and (i - 1) % rowsize != 4:
         return i - 1
     else: return -1
 
 def placetile(board, i):
-    print("---")
-    print(f"Placing tile at: {i}")
+    # print("---")
+    # print(f"Placing tile at: {i}")
     board[i] = True
     points = 1
     rp = rowpoints(board, i)
     cp = colpoints(board, i)
-    print("Tilepoints: 1")
+    # print("Tilepoints: 1")
     if rp > 0 and cp > 0:
         points += 1
     points += rp + cp
-    printboard(board, points)
+    # printboard(board, points)
     
 def rowpoints(board, i):
     points = eastpoints(board, i) + westpoints(board, i)
-    print(f"Row Neighbors: {points}")
+    # print(f"Row Neighbors: {points}")
     return points
 
 def colpoints(board, i):
     points = northpoints(board, i) + southpoints(board, i)
-    print(f"Col Neighbors: {points}")
+    # print(f"Col Neighbors: {points}")
     return points
 
 def northpoints(board, i):
@@ -77,15 +77,43 @@ def westpoints(board, i):
     else: return 1 + westpoints(board, westof(board, i))
 
 def generatetilepatterns(board, size):
-    # this may be a dynamic programming problem
-    return 0
+    visited = {}
+    patterns = []
+    pos = 12
+    path = []
+    takestep(board, visited, patterns, path, size, pos, pos)
+    return patterns
+
+def takestep(board, visited, patterns, path, steps, pos, startpos):
+    # don't step where already stepped
+    path.append(pos)
+    visited[pos] = True
+    steps -= 1
+    if steps == 0:
+        patterns.append(path.copy())
+        path.pop()
+        del visited[pos]
+        return
+    
+    neighbors = [northof(board, pos), southof(board, pos), eastof(board, pos), westof(board, pos)]
+    for neighbor in neighbors:
+        if neighbor != -1 and neighbor not in visited:
+            takestep(board, visited, patterns, path, steps, neighbor, startpos)
+    path.pop()
+    del visited[pos]
+    
+    
 
 def printboard(board, points):
+    print("---")
     for i in range(5):
         for j in range(5):
-            print(f" {board[5*i + j]}", end='')
+            if board[5*i + j]:
+                print(" O ", end='')
+            else:
+                print(" . ", end='')
         print()
-    print(f"Points: {points}")
+    # print(f"Points for this placement: {points}")
 
 # 0  1  2  3  4
 # 5  6  7  8  9
@@ -93,14 +121,14 @@ def printboard(board, points):
 # 15 16 17 18 19
 # 20 21 22 23 24
 
-board = [False for _ in range(25)]
-# print(board)
-# points = placetile(board, 12)
-printboard(board, 0)
-placetile(board, 12)
-placetile(board, 8)
-placetile(board, 7)
-placetile(board, 22)
-placetile(board, 17)
+# use recursive backtracking algorithm to get tile locations
+# then send those locations into a permutation generator to get
+# all tile placement orders for each pattern
 
-print(list(itertools.permutations([1, 2, 3])))
+board = [False for _ in range(25)]
+patterns = generatetilepatterns(board, 3)
+for pattern in patterns:
+    board = [False for _ in range(25)]
+    for tile in pattern:
+        placetile(board, tile)
+    printboard(board, 0)
