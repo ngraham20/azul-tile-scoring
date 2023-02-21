@@ -179,8 +179,9 @@ Tile Positions
 --------------'''
     sys.exit(helpmessage)
 board = [False for _ in range(25)]
-# patterns = gtp_recursive_backtracking(board, int(sys.argv[1]), int(sys.argv[2]))
-patterns, frontier = gtp_puddle(board, int(sys.argv[1]), int(sys.argv[2]))
+frontier = None
+patterns = gtp_recursive_backtracking(board, int(sys.argv[1]), int(sys.argv[2]))
+# patterns, frontier = gtp_puddle(board, int(sys.argv[1]), int(sys.argv[2]))
 
 # display patterns
 bestpattern = (None, 0)

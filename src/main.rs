@@ -1,12 +1,30 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 fn main() {
     let size = 2;
     let startpos = 12;
 
-    let mut board: Vec<Tile> = vec![Tile::Empty;25];
-    board[12] = Tile::Tile;
-    print_board(&board)
+    let mut explore_board: Vec<Tile> = vec![Tile::Empty;25];
+    explore_board[12] = Tile::Tile;
+    let mut frontiers = find_neighbors(&explore_board, 12);
+    let mut pattern: BTreeSet<usize> = BTreeSet::new();
+    pattern.insert(12);
+    let mut patterns = BTreeSet::new();
+    patterns.insert(pattern);
+    for _ in 0..size-1 {
+        patterns.extend(explore_frontiers(&mut explore_board, &pattern, &mut frontiers));
+    }
+    println!("{:?}", patterns);
+    let mut display_board: Vec<Tile> = vec![Tile::Empty;25];
+    for pattern in patterns.iter() {
+        for idx in pattern.iter() {
+            display_board[*idx] = Tile::Tile;
+        }
+    }
+    for frontier in frontiers.iter() {
+        display_board[*frontier] = Tile::Frontier;
+    }
+    print_board(&explore_board);
 }
 #[derive(Clone, Copy)]
 enum Tile {
@@ -29,15 +47,18 @@ fn print_board(board: &Vec<Tile>) {
     }
 }
 
-fn find_neighbors(board: &Vec<bool>, node: usize) -> HashSet<usize> {
+fn find_neighbors(board: &Vec<Tile>, node: usize) -> BTreeSet<usize> {
     let rowsize = f64::sqrt(board.len() as f64) as usize;
-    let mut neighbors = HashSet::<usize>::new();
+    let mut neighbors = BTreeSet::<usize>::new();
+    if let Tile::Empty = board[node] {
+        return neighbors;
+    }
     // north
-    if node - rowsize > 0 && board[node] == false {
+    if (node as i64 - rowsize as i64) > 0{
         neighbors.insert(node - rowsize);
     }
     // south
-    if node + rowsize < board.len() && board[node] == false {
+    if node + rowsize < board.len() {
         neighbors.insert(node + rowsize);
     }
     // east
@@ -49,12 +70,19 @@ fn find_neighbors(board: &Vec<bool>, node: usize) -> HashSet<usize> {
         neighbors.insert(node - 1);
     }
 
-    return neighbors
+    neighbors
 }
 
-fn gtp_puddle(board: Vec<usize>, patterns: HashSet<HashSet<usize>>, frontier: HashSet<usize>) -> HashSet<HashSet<usize>> {
-
-    // take the current set
-    // figure out the frontiers
-    return HashSet::new();
+fn explore_frontiers(board: &mut Vec<Tile>, pattern: &BTreeSet<usize>, frontiers: &mut BTreeSet<usize>) -> BTreeSet<BTreeSet<usize>> {
+    let mut patterns: BTreeSet<BTreeSet<usize>> = BTreeSet::new();
+    for frontier in frontiers.clone().iter() {
+        let mut newpattern = pattern.clone();
+        newpattern.insert(*frontier);
+        patterns.insert(newpattern);
+        frontiers.remove(frontier);
+        board[*frontier] = Tile::Tile;
+        frontiers.extend(find_neighbors(board, *frontier));
+    }
+    
+    patterns
 }
