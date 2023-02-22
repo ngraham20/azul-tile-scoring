@@ -1,4 +1,5 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
+use itertools::Itertools;
 use std::env;
 
 mod pattern;
@@ -34,9 +35,33 @@ fn main() {
         patterns = sizepatterns;
     }
 
+    let mut permutations: Vec<Vec<usize>> = Vec::new();
+    let mut permscores: HashMap<usize, Vec<Vec<usize>>> = HashMap::new();
+
     for pattern in patterns.iter() {
         let display_board = board_from_pattern(&pattern, 25);
         print_board(&display_board);
+
+        permutations.extend(pattern.tiles.clone().into_iter().permutations(pattern.tiles.len()).unique());
+    }
+
+    for perm in permutations {
+        let score = score_permutation(&perm, 25);
+        permscores.entry(score).or_insert(vec![]).push(perm);
+    }
+
+    for (score, tiles) in permscores.iter() {
+        println!("There are {} permutations with a score of {}", tiles.len(), score);
+    }
+
+    let highscore = permscores.keys().max().unwrap();
+    let bestpermutation = permscores.get(highscore).unwrap().last().unwrap();
+    let mut permboard: Vec<Tile> = vec![Tile::Empty; 25];
+    println!("The highest score possible with {} tiles is: {}", patternsize, highscore);
+    println!("Here is one of those patterns.");
+    for tile in bestpermutation {
+        permboard[*tile] = Tile::Tile;
+        print_board(&permboard);
     }
 
 }

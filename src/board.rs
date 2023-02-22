@@ -18,7 +18,7 @@ pub fn print_board(board: &Vec<Tile>) {
     println!("---------------");
 }
 
-fn north_neighbor(board: &Vec<Tile>, rowsize: usize, node: usize) -> Option<usize> {
+fn north_neighbor(rowsize: usize, node: usize) -> Option<usize> {
     if (node as i64 - rowsize as i64) > 0 {
         Some(node - rowsize)
     } else { None }
@@ -37,10 +37,9 @@ fn east_neighbor(board: &Vec<Tile>, rowsize: usize, node: usize) -> Option<usize
     } else { None }
 }
 
-fn west_neighbor(board: &Vec<Tile>, rowsize: usize, node: usize) -> Option<usize> {
-    let neighbor = node - 1;
-    if (node as i64 - 1) >= 0 && neighbor % rowsize != rowsize - 1 {
-        Some(neighbor)
+fn west_neighbor(rowsize: usize, node: usize) -> Option<usize> {
+    if (node as i64 - 1) >= 0 && (node - 1) % rowsize != rowsize - 1 {
+        Some(node - 1)
     } else { None }
 }
 
@@ -49,7 +48,7 @@ pub fn find_neighbors(board: &Vec<Tile>, node: usize) -> BTreeSet<usize> {
     let mut neighbors = BTreeSet::<usize>::new();
 
     // north
-    if let Some(neighbor) = north_neighbor(board, rowsize, node) {
+    if let Some(neighbor) = north_neighbor(rowsize, node) {
         if let Tile::Empty = board[neighbor] {
             neighbors.insert(neighbor);
         }
@@ -67,7 +66,7 @@ pub fn find_neighbors(board: &Vec<Tile>, node: usize) -> BTreeSet<usize> {
         }
     } 
     // west
-    if let Some(neighbor) = west_neighbor(board, rowsize, node) {
+    if let Some(neighbor) = west_neighbor(rowsize, node) {
         if let Tile::Empty = board[neighbor] {
             neighbors.insert(neighbor);
         }
@@ -89,8 +88,21 @@ pub fn board_from_pattern(pattern: &Pattern, boardsize: usize) -> Vec<Tile> {
     board
 }
 
+pub fn score_permutation(tiles: &Vec<usize>, boardsize: usize) -> usize {
+    let mut board = vec![Tile::Empty; boardsize];
+    let mut score = 0usize;
+    for tile in tiles.iter() {
+        board[*tile] = Tile::Tile;
+        if let Some(tilepoints) = score_placement(&board, *tile) {
+            score += tilepoints;
+        };
+    }
+
+    score
+}
+
 fn north_points(board: &Vec<Tile>, rowsize: usize, tile: usize) -> usize {
-    if let Some(neighbor) = north_neighbor(board, rowsize,  tile) {
+    if let Some(neighbor) = north_neighbor(rowsize,  tile) {
         match board[neighbor] {
             Tile::Tile => 1 + north_points(board, rowsize, neighbor),
             _ => 0
@@ -117,7 +129,7 @@ fn east_points(board: &Vec<Tile>, rowsize: usize, tile: usize) -> usize {
 }
 
 fn west_points(board: &Vec<Tile>, rowsize: usize, tile: usize) -> usize {
-    if let Some(neighbor) = west_neighbor(board, rowsize, tile) {
+    if let Some(neighbor) = west_neighbor(rowsize, tile) {
         match board[neighbor] {
             Tile::Tile => 1 + west_points(board, rowsize, neighbor),
             _ => 0
@@ -126,7 +138,7 @@ fn west_points(board: &Vec<Tile>, rowsize: usize, tile: usize) -> usize {
 }
 
 pub fn score_placement(board: &Vec<Tile>, tile: usize) -> Option<usize> {
-    let mut points = 0usize;
+    let mut points = 1usize;
     let rowsize = f64::sqrt(board.len() as f64) as usize;
 
     // row points
